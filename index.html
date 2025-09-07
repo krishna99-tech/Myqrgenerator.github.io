@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Wi-Fi QR Generator</title>
+  <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+  <style>
+    body { font-family: sans-serif; background: #f8fafc; margin:0; padding:1.5rem; display:flex; align-items:center; justify-content:center; min-height:100vh; }
+    .card { max-width:420px; background:#fff; border-radius:1rem; padding:1.5rem; box-shadow:0 2px 6px rgba(0,0,0,0.1); }
+    h1 { font-size:1.5rem; margin-bottom:1rem; }
+    label { display:block; margin-top:0.5rem; font-size:0.85rem; }
+    input, select { width:100%; padding:0.5rem; margin-top:0.25rem; border:1px solid #cbd5e1; border-radius:0.5rem; font-size:0.9rem; }
+    .password-wrapper { position: relative; }
+    .toggle-password {
+      position: absolute;
+      right: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+      font-size: 0.9rem;
+      color: #475569;
+      user-select: none;
+    }
+    button { margin-top:1rem; padding:0.6rem 1rem; border:none; border-radius:0.5rem; cursor:pointer; font-size:0.9rem; background:#16a34a; color:white; }
+    #qrcode { margin-top:1.5rem; text-align:center; }
+    #downloadBtn { display:none; }
+  </style>
+  <!-- QR Code Styling library -->
+  <script src="https://cdn.jsdelivr.net/npm/qr-code-styling/lib/qr-code-styling.js"></script>
+</head>
+<body>
+  <div class="card">
+    <h1>Wi-Fi QR Generator</h1>
+    
+    <label>SSID (Network Name)</label>
+    <input id="ssid" placeholder="MyHotspot" />
+
+    <label>Password</label>
+    <div class="password-wrapper">
+      <input id="password" type="password" placeholder="••••••••" />
+      <span class="toggle-password" onclick="togglePassword()">👁</span>
+    </div>
+
+    <label>Encryption</label>
+    <select id="encryption">
+      <option value="WPA">WPA/WPA2/WPA3</option>
+      <option value="WEP">WEP</option>
+      <option value="">None (Open)</option>
+    </select>
+
+    <label><input type="checkbox" id="hidden"> Hidden SSID</label>
+
+    <label>QR Style</label>
+    <select id="qrstyle">
+      <option value="square">Square</option>
+      <option value="dots">Dots</option>
+      <option value="rounded">Rounded</option>
+      <option value="classy">Classy</option>
+      <option value="classy-rounded">Classy Rounded</option>
+      <option value="extra-rounded">Extra Rounded</option>
+    </select>
+
+    <button id="downloadBtn" onclick="downloadQR()">Download QR</button>
+
+    <div id="qrcode">
+      <span style="color:#94a3b8; font-size:0.8rem;">QR will appear here</span>
+    </div>
+  </div>
+
+  <script>
+    let qr = new QRCodeStyling({
+      width: 220,
+      height: 220,
+      data: "",
+      dotsOptions: { type: "square", color: "#000" },
+      backgroundOptions: { color: "#ffffff" }
+    });
+
+    qr.append(document.getElementById("qrcode"));
+
+    function updateQR() {
+      const ssid = document.getElementById("ssid").value;
+      const password = document.getElementById("password").value;
+      const encryption = document.getElementById("encryption").value;
+      const hidden = document.getElementById("hidden").checked;
+      const style = document.getElementById("qrstyle").value;
+
+      if (!ssid) {
+        qr.update({ data: "" });
+        document.getElementById("downloadBtn").style.display = "none";
+        return;
+      }
+
+      // ✅ Proper Wi-Fi QR format
+      let qrData = "WIFI:";
+      qrData += `T:${encryption || ""};`;
+      qrData += `S:${ssid};`;
+      if (password) qrData += `P:${password};`;
+      if (hidden) qrData += `H:true;`;
+      qrData += ";;";  // <-- Always end with double semicolons
+
+      qr.update({
+        data: qrData,
+        dotsOptions: { type: style, color: "#000" }
+      });
+
+      document.getElementById("downloadBtn").style.display = "inline-block";
+    }
+
+    function downloadQR() {
+      if (!qr) return;
+      qr.download({ name: "wifi-qr", extension: "png" });
+    }
+
+    function togglePassword() {
+      const pwdInput = document.getElementById("password");
+      const toggle = document.querySelector(".toggle-password");
+      if (pwdInput.type === "password") {
+        pwdInput.type = "text";
+        toggle.textContent = "🙈";
+      } else {
+        pwdInput.type = "password";
+        toggle.textContent = "👁";
+      }
+    }
+
+    // 👂 Live updates
+    document.getElementById("ssid").addEventListener("input", updateQR);
+    document.getElementById("password").addEventListener("input", updateQR);
+    document.getElementById("encryption").addEventListener("change", updateQR);
+    document.getElementById("hidden").addEventListener("change", updateQR);
+    document.getElementById("qrstyle").addEventListener("change", updateQR);
+  </script>
+</body>
+</html>
